@@ -1,8 +1,14 @@
 const payload = window.XHS_NOTES_DATA || { meta: {}, notes: [] };
 const notes = Array.isArray(payload.notes) ? payload.notes : [];
 const hiddenStorageKey = "xhsnotes-backup-hidden-notes";
+const authStorageKey = "xhsnotes-backup-authenticated";
+const passwordHash = "dbe617185d5397ec10cd34402daa1811075db3e8185ce938035b992492fd05d6";
 
 const elements = {
+  authGate: document.querySelector("#authGate"),
+  authForm: document.querySelector("#authForm"),
+  passwordInput: document.querySelector("#passwordInput"),
+  authError: document.querySelector("#authError"),
   summaryText: document.querySelector("#summaryText"),
   totalCount: document.querySelector("#totalCount"),
   shownCount: document.querySelector("#shownCount"),
@@ -30,6 +36,39 @@ const state = {
 
 let currentList = [];
 let hiddenNoteKeys = loadHiddenNoteKeys();
+
+async function sha256(value) {
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function unlock() {
+  document.body.classList.remove("auth-locked");
+  elements.authGate.hidden = true;
+  window.sessionStorage.setItem(authStorageKey, "1");
+}
+
+function bindAuth() {
+  if (window.sessionStorage.getItem(authStorageKey) === "1") {
+    unlock();
+    return;
+  }
+
+  elements.passwordInput.focus();
+  elements.authForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    elements.authError.hidden = true;
+    const hash = await sha256(elements.passwordInput.value);
+    if (hash === passwordHash) {
+      unlock();
+      return;
+    }
+    elements.passwordInput.value = "";
+    elements.authError.hidden = false;
+    elements.passwordInput.focus();
+  });
+}
 
 function loadHiddenNoteKeys() {
   try {
@@ -252,6 +291,7 @@ function bindEvents() {
 }
 
 function init() {
+  bindAuth();
   const meta = payload.meta || {};
   elements.totalCount.textContent = String(visibleNotes().length);
   const duplicateText = Number(meta.duplicateRemoved || 0) > 0 ? `，已去重 ${meta.duplicateRemoved} 条` : "";

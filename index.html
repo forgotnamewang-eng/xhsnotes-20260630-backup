@@ -7,7 +7,18 @@
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="styles.css" />
   </head>
-  <body>
+  <body class="auth-locked">
+    <section id="authGate" class="auth-gate" aria-label="访问验证">
+      <form id="authForm" class="auth-box">
+        <h1>小红书热门笔记库（26.6.30 备份）</h1>
+        <label>
+          <span>访问密码</span>
+          <input id="passwordInput" type="password" autocomplete="current-password" />
+        </label>
+        <p id="authError" class="auth-error" hidden>密码不对</p>
+        <button type="submit">进入</button>
+      </form>
+    </section>
     <div class="app-shell">
       <header class="topbar">
         <div>
